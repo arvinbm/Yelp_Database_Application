@@ -1,40 +1,92 @@
-# Program Functionality README
+# Yelp Database Application
 
-## Login
-When the user first starts the program, they will be prompted to enter their user ID. If the entered user ID exists in the database, they will be shown the menu containing the functionalities of the program. Otherwise, they will be prompted to enter a valid user ID.
+A Python CLI application for querying and interacting with a Yelp-style business dataset stored in a SQL Server database. Supports composable business search with up to four simultaneous filters, user discovery, friend connections, and star-rated reviews.
 
-## Menu of Functionalities
-The user has the following options:
-1. Search a business based on filters which are explained later.
-2. Search a user based on filters which are explained later.
-3. Make a friendship.
-4. Write a review for a business.
-5. Quit the program.
+Built for CMPT-354 (Database Systems) at Simon Fraser University. Grade: A.
 
-If the user enters an invalid option, for example a number more than 5 or less than 1, or a string of characters, they will be asked to enter a valid option.
+---
 
-## Search a Business
-A user has the option to select any combination of the following filters:
-1. Businesses with the maximum number of stars.
-2. Businesses with the minimum number of stars.
-3. Search a business based on the name of the city they are located in.
-4. Search a business based on the name of the business (or part of the name).
+## Features
 
-If the user selects an invalid option, they will be asked to enter a number between 1 and 4. Each time a user enters a valid option, they will be asked if they wish to select more options. They can answer with "yes" or "no" (case insensitive). Any order of selecting the filters is valid. If options 1 and 2 are selected, both the minimum and maximum number of stars will be printed on the terminal. When option 3 is selected, the user is asked to enter the name of the city (case insensitive). When option 4 is selected, the user can provide the name or part of the name of the business they wish to search. After any number or combination of filters, the result of the search is printed on the terminal. The user will be notified if the result is empty. The result is ordered by the name of the business.
+- **Business search** — filter by min/max stars, city name, and business name in any combination (up to 4 filters at once)
+- **User search** — find users by name, or filter by useful/funny/cool rating attributes
+- **Friendship management** — record new friendships between users (with duplicate detection)
+- **Review submission** — submit a star rating (1–5) for any business, with auto-generated review ID and timestamp
+- **Full input validation** — every prompt re-asks on invalid input; no crashes from bad data
 
-## Search a User
-A user has the option to select any combination of the following filters:
-1. Search a user based on their name (or part of their name).
-2. A useful user.
-3. A funny user.
-4. A cool user.
+---
 
-After selecting the filters, the result of the search will be shown on the terminal. The user will be notified if the search result is empty. The result is ordered by the name of the user.
+## Setup
 
-## Make a Friendship
-The user will be asked for the user ID of the user they wish to be friends with. If the user ID does not exist in the database, the user is notified and asked for another valid user ID. The user will be notified when the friendship is recorded in the database.
+**Requirements:** Python 3.9+, `pyodbc`, access to the SFU CSIL SQL Server
 
-## Write a Review for a Business
-The user will be asked to enter the ID of the business they wish to review. If the business ID does not exist in the database, the user is asked to enter another valid business ID. The user will be notified once the review has been recorded in the database.
+```bash
+git clone https://github.com/arvinbm/Yelp_Database_Application.git
+cd Yelp_Database_Application
 
-After each of these functions returns the results, the menu of functions is shown again to the user.
+pip install pyodbc
+python3 Assignment7.py
+```
+
+> **Note:** The app connects to SFU's `cypress.csil.sfu.ca` SQL Server. You'll need to be on the SFU network (or VPN) and update the connection string in `Assignment7.py` with valid credentials.
+
+---
+
+## Usage
+
+**Login:** Enter a valid user ID from the `user_yelp` table. The program validates the ID before proceeding.
+
+**Main menu:**
+
+```
+1. Search a Business
+2. Search a User
+3. Make a Friend
+4. Write a Review
+5. Quit the program
+```
+
+### Search a Business
+
+Select any combination of filters — the app builds and executes the appropriate SQL query:
+
+| Filter | Description |
+|---|---|
+| Min stars | Businesses with the lowest star rating in the dataset |
+| Max stars | Businesses with the highest star rating in the dataset |
+| City | Case-insensitive city name match |
+| Name | Partial name match (`LIKE %query%`) |
+
+Results are ordered by business name.
+
+### Search a User
+
+Filter users by name (partial match) and/or one or more attributes — `useful > 0`, `funny > 0`, `cool > 0`. Results are ordered by name.
+
+### Make a Friend
+
+Enter a user ID to record a friendship. Validates that the ID exists and that the friendship isn't already in the database before inserting.
+
+### Write a Review
+
+Enter a business ID and a star rating (1–5). The app generates a unique 22-character alphanumeric review ID, checks for collisions, then inserts the review with the current timestamp.
+
+---
+
+## Project Structure
+
+```
+Yelp_Database_Application/
+└── Assignment7.py    # Full application — login, menu, all CRUD and query logic
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| Language | Python 3 |
+| Database | Microsoft SQL Server (SFU CSIL cluster) |
+| Connectivity | `pyodbc` (ODBC Driver 18 for SQL Server) |
+| Query design | Parameterized SQL with indexed lookups on `name`, `city`, `stars` |
